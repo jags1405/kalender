@@ -1,0 +1,179 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Familienkalender</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100vh;
+      background-color: #f4f4f4;
+    }
+    .calendar-container {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 1px;
+      width: 100%;
+      max-width: 1200px;
+      background-color: #ccc;
+    }
+    .calendar-column {
+      background-color: #fff;
+      padding: 10px;
+      border: 1px solid #ddd;
+    }
+    .calendar-column h2 {
+      text-align: center;
+    }
+    .calendar-day {
+      margin: 5px 0;
+      padding: 5px;
+      background-color: #e0e0e0;
+      text-align: center;
+    }
+    .todo-list {
+      margin-top: 10px;
+    }
+    .todo-item {
+      background-color: #fafafa;
+      margin: 5px 0;
+      padding: 5px;
+      border-radius: 3px;
+      border: 1px solid #ddd;
+    }
+    .todo-input {
+      width: 100%;
+      padding: 5px;
+      margin-top: 10px;
+    }
+    .month-navigation {
+      margin: 10px;
+      text-align: center;
+    }
+    .month-navigation button {
+      padding: 10px;
+      margin: 0 5px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+
+
+  <div class="month-navigation">
+    <button onclick="changeMonth(-1)">Vorheriger Monat</button>
+    <span id="currentMonth">Oktober 2024</span>
+    <button onclick="changeMonth(1)">Nächster Monat</button>
+  </div>
+
+
+  <div class="calendar-container" id="calendar">
+    <!-- Kalender-Spalten werden dynamisch von JavaScript erstellt -->
+  </div>
+
+
+  <script>
+    const months = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
+    let currentMonth = 9; // Oktober als Beispiel
+    let currentYear = 2024;
+
+
+    const familyMembers = ["Familienmitglied 1", "Familienmitglied 2", "Familienmitglied 3", "Familienmitglied 4", "Familienmitglied 5"];
+
+
+    function renderCalendar() {
+      document.getElementById("currentMonth").innerText = `${months[currentMonth]} ${currentYear}`;
+      const calendar = document.getElementById("calendar");
+      calendar.innerHTML = ""; // Lösche vorherige Inhalte
+
+
+      familyMembers.forEach((member, index) => {
+        const column = document.createElement("div");
+        column.className = "calendar-column";
+        const title = document.createElement("h2");
+        title.innerText = member;
+        column.appendChild(title);
+
+
+        for (let day = 1; day <= 30; day++) { // Beispielhaft 30 Tage für den Monat
+          const dayDiv = document.createElement("div");
+          dayDiv.className = "calendar-day";
+          dayDiv.innerText = `${day}. ${months[currentMonth]}`;
+
+
+          const todoList = document.createElement("div");
+          todoList.className = "todo-list";
+          const savedTodos = getSavedTodos(index, day);
+          savedTodos.forEach(todo => {
+            const todoDiv = document.createElement("div");
+            todoDiv.className = "todo-item";
+            todoDiv.innerText = todo;
+            todoList.appendChild(todoDiv);
+          });
+
+
+          const todoInput = document.createElement("input");
+          todoInput.type = "text";
+          todoInput.className = "todo-input";
+          todoInput.placeholder = "Neues To-Do";
+          todoInput.addEventListener("keydown", function (event) {
+            if (event.key === "Enter" && todoInput.value !== "") {
+              saveTodo(index, day, todoInput.value);
+              todoList.innerHTML = "";
+              getSavedTodos(index, day).forEach(todo => {
+                const todoDiv = document.createElement("div");
+                todoDiv.className = "todo-item";
+                todoDiv.innerText = todo;
+                todoList.appendChild(todoDiv);
+              });
+              todoInput.value = "";
+            }
+          });
+
+
+          dayDiv.appendChild(todoList);
+          dayDiv.appendChild(todoInput);
+          column.appendChild(dayDiv);
+        }
+        calendar.appendChild(column);
+      });
+    }
+
+
+    function saveTodo(column, day, todo) {
+      const key = `${currentYear}-${currentMonth + 1}-member${column}-day${day}`;
+      const savedTodos = JSON.parse(localStorage.getItem(key)) || [];
+      savedTodos.push(todo);
+      localStorage.setItem(key, JSON.stringify(savedTodos));
+    }
+
+
+    function getSavedTodos(column, day) {
+      const key = `${currentYear}-${currentMonth + 1}-member${column}-day${day}`;
+      return JSON.parse(localStorage.getItem(key)) || [];
+    }
+
+
+    function changeMonth(direction) {
+      currentMonth += direction;
+      if (currentMonth < 0) {
+        currentMonth = 11;
+        currentYear--;
+      } else if (currentMonth > 11) {
+        currentMonth = 0;
+        currentYear++;
+      }
+      renderCalendar();
+    }
+
+
+    renderCalendar();
+  </script>
+</body>
+</html>
