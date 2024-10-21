@@ -1,0 +1,247 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Familienkalender</title>
+  
+  <!-- CSS-Stile für das Layout des Kalenders -->
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100vh;
+      background-color: #f4f4f4;
+    }
+    .calendar-container {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr); /* Fünf Spalten für die Familienmitglieder */
+      gap: 1px;
+      width: 100%;
+      max-width: 1200px;
+      background-color: #ccc;
+    }
+    .calendar-column {
+      background-color: #fff;
+      padding: 10px;
+      border: 1px solid #ddd;
+    }
+    .calendar-column h2 {
+      text-align: center;
+    }
+    .calendar-day {
+      margin: 5px 0;
+      padding: 5px;
+      background-color: #e0e0e0;
+      text-align: center;
+    }
+    .todo-list {
+      margin-top: 10px;
+    }
+    .todo-item {
+      background-color: #fafafa;
+      margin: 5px 0;
+      padding: 5px;
+      border-radius: 3px;
+      border: 1px solid #ddd;
+    }
+    .todo-input {
+      width: 100%;
+      padding: 5px;
+      margin-top: 10px;
+    }
+    .month-navigation {
+      margin: 10px;
+      text-align: center;
+    }
+    .month-navigation button {
+      padding: 10px;
+      margin: 0 5px;
+      font-size: 16px;
+    }
+  </style>
+
+  <!-- Firebase SDKs einbinden -->
+  <!-- Diese Skripte ermöglichen die Nutzung von Firebase in deiner Webanwendung -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
+
+  <script>
+    // Firebase-Konfiguration
+    // Ersetze die Platzhalter mit deinen tatsächlichen Firebase-Projektdaten
+    const firebaseConfig = {
+      apiKey: "AIzaSyA7YjQwQtC213LTrM8BBT6B4aPAnTflbS4",
+      authDomain: "kalender-ecc1a.firebaseapp.com",
+      databaseURL: "https://kalender-ecc1a-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "kalender-ecc1a",
+      storageBucket: "kalender-ecc1a.appspot.com",
+      messagingSenderId: "155995562112",
+      appId: "1:155995562112:web:fb4361749a82b6e0360665"
+    };
+
+    // Firebase initialisieren
+    // Dies verbindet deine Webanwendung mit deinem Firebase-Projekt
+    const app = firebase.initializeApp(firebaseConfig);
+    const database = firebase.database(); // Zugriff auf die Realtime Database
+  </script>
+</head>
+<body>
+
+  <!-- Monatsnavigation: Buttons zum Wechseln der Monate -->
+  <div class="month-navigation">
+    <button onclick="changeMonth(-1)">Vorheriger Monat</button>
+    <span id="currentMonth">Oktober 2024</span>
+    <button onclick="changeMonth(1)">Nächster Monat</button>
+  </div>
+
+  <!-- Kalender-Container: Hier werden die Kalender-Spalten dynamisch erstellt -->
+  <div class="calendar-container" id="calendar">
+    <!-- Dynamische Inhalte werden hier eingefügt -->
+  </div>
+
+  <!-- JavaScript-Funktionen zur Handhabung des Kalenders und der To-Dos -->
+  <script>
+    // Array der Monatsnamen
+    const months = ["Januar", "Februar", "März", "April", "Mai", "Juni", 
+                    "Juli", "August", "September", "Oktober", "November", "Dezember"];
+
+    // Aktuelles Monat und Jahr
+    let currentMonth = 9; // Oktober (0-basiert, also 9 entspricht Oktober)
+    let currentYear = 2024;
+
+    // Array der Familienmitglieder
+    const familyMembers = ["Bea", "Samira", "Alina", "Toni", "Allgemein"];
+
+    // Funktion zum Rendern des Kalenders
+    function renderCalendar() {
+      // Anzeige des aktuellen Monats und Jahres
+      document.getElementById("currentMonth").innerText = `${months[currentMonth]} ${currentYear}`;
+      
+      // Zugriff auf den Kalender-Container
+      const calendar = document.getElementById("calendar");
+      calendar.innerHTML = ""; // Löscht vorherige Inhalte
+
+      // Iteration über jedes Familienmitglied, um eine Spalte zu erstellen
+      familyMembers.forEach((member, index) => {
+        const column = document.createElement("div");
+        column.className = "calendar-column";
+        
+        // Titel für das Familienmitglied
+        const title = document.createElement("h2");
+        title.innerText = member;
+        column.appendChild(title);
+
+        // Iteration über jeden Tag des Monats (hier exemplarisch 30 Tage)
+        for (let day = 1; day <= 30; day++) {
+          const dayDiv = document.createElement("div");
+          dayDiv.className = "calendar-day";
+          dayDiv.innerText = `${day}. ${months[currentMonth]}`;
+
+          // Container für die To-Dos
+          const todoList = document.createElement("div");
+          todoList.className = "todo-list";
+
+          // Eingabefeld für neue To-Dos
+          const todoInput = document.createElement("input");
+          todoInput.type = "text";
+          todoInput.className = "todo-input";
+          todoInput.placeholder = "Neues To-Do";
+          
+          // Event Listener für das Speichern der To-Dos beim Drücken der Enter-Taste
+          todoInput.addEventListener("keydown", function (event) {
+            if (event.key === "Enter" && todoInput.value !== "") {
+              saveTodo(index, day, todoInput.value); // Speichert das To-Do in Firebase
+              todoInput.value = ""; // Leert das Eingabefeld
+            }
+          });
+
+          // Hinzufügen der To-Do-Liste und des Eingabefelds zum Tag-Container
+          dayDiv.appendChild(todoList);
+          dayDiv.appendChild(todoInput);
+          column.appendChild(dayDiv);
+        }
+        
+        // Hinzufügen der Familienmitglied-Spalte zum Kalender-Container
+        calendar.appendChild(column);
+      });
+
+      // Nach dem Rendern des Kalenders To-Dos für den aktuellen Monat laden
+      loadTodosForMonth();
+    }
+
+    // Funktion zum Speichern eines To-Dos in Firebase
+    function saveTodo(familyMember, day, todo) {
+      // Referenz zur spezifischen Position in der Datenbank
+      const todoRef = database.ref('todos/' + familyMember + '/' + day);
+      
+      // To-Do in die Datenbank pushen
+      todoRef.push({
+        task: todo
+      }).then(function() {
+        alert("To-Do gespeichert!");
+      }).catch(function(error) {
+        console.error("Fehler beim Speichern des To-Dos:", error);
+      });
+    }
+
+    // Funktion zum Abrufen und Anzeigen von To-Dos aus Firebase
+    function getTodos(familyMember, day) {
+      // Referenz zur spezifischen Position in der Datenbank
+      const todoRef = database.ref('todos/' + familyMember + '/' + day);
+      
+      // Listener für Änderungen an den To-Dos
+      todoRef.on('value', function(snapshot) {
+        const todos = snapshot.val();
+        // Hier könntest du den entsprechenden To-Do-Container finden und die To-Dos anzeigen
+        // Da die Struktur dynamisch ist, müssen wir den richtigen Container anhand der Familie und des Tages finden
+        const calendar = document.getElementById("calendar");
+        const familyColumn = calendar.children[familyMember];
+        const dayDiv = familyColumn.children[day - 1]; // Tage sind 1-basiert
+        const todoList = dayDiv.querySelector(".todo-list");
+        todoList.innerHTML = ""; // Löscht vorherige Liste
+
+        if (todos) {
+          Object.keys(todos).forEach(function(key) {
+            const todoItem = document.createElement('div');
+            todoItem.className = "todo-item";
+            todoItem.innerText = todos[key].task;
+            todoList.appendChild(todoItem); // Fügt das To-Do zur Liste hinzu
+          });
+        } else {
+          todoList.innerText = "Keine To-Dos für diesen Tag.";
+        }
+      });
+    }
+
+    // Funktion zum Wechseln des Monats
+    function changeMonth(direction) {
+      currentMonth += direction;
+      if (currentMonth < 0) { // Vorheriger Monat
+        currentMonth = 11;
+        currentYear--;
+      } else if (currentMonth > 11) { // Nächster Monat
+        currentMonth = 0;
+        currentYear++;
+      }
+      renderCalendar(); // Kalender neu rendern
+    }
+
+    // Funktion zum Laden aller To-Dos für den aktuellen Monat
+    function loadTodosForMonth() {
+      familyMembers.forEach((member, index) => {
+        for (let day = 1; day <= 30; day++) { // Beispielhaft 30 Tage
+          getTodos(index, day); // Ruft To-Dos für jedes Familienmitglied und jeden Tag ab
+        }
+      });
+    }
+
+    // Initialer Render des Kalenders beim Laden der Seite
+    renderCalendar();
+  </script>
+
+</body>
+</html>
