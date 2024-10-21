@@ -62,6 +62,48 @@
       font-size: 16px;
     }
   </style>
+  
+  <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-database.js"></script>
+
+<script>
+  // Firebase-Konfiguration (ersetze mit deinen Firebase-Projektdaten)
+  var firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+    databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT_ID.appspot.com",
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
+
+  // Firebase initialisieren
+  firebase.initializeApp(firebaseConfig);
+  var database = firebase.database();
+</script>
+
+<!-- Firebase SDKs einbinden -->
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
+
+<script>
+  // Firebase-Konfiguration (mit deinen Projektdaten)
+  const firebaseConfig = {
+    apiKey: "AIzaSyA7YjQwQtC213LTrM8BBT6B4aPAnTflbS4",
+    authDomain: "kalender-ecc1a.firebaseapp.com",
+    databaseURL: "https://kalender-ecc1a-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "kalender-ecc1a",
+    storageBucket: "kalender-ecc1a.appspot.com",
+    messagingSenderId: "155995562112",
+    appId: "1:155995562112:web:fb4361749a82b6e0360665"
+  };
+
+  // Firebase initialisieren
+  const app = firebase.initializeApp(firebaseConfig);
+  const database = firebase.database();
+</script>
+  
 </head>
 <body>
 
@@ -175,5 +217,44 @@
 
     renderCalendar();
   </script>
+
+<script>
+  // Funktion zum Speichern eines neuen To-Dos
+  function saveTodo(familyMember, day, todo) {
+    if (todo === "") {
+      alert("Bitte ein To-Do eingeben!");
+      return;
+    }
+
+    var todoRef = database.ref('todos/' + familyMember + '/' + day);
+    todoRef.push({
+      task: todo
+    }).then(function() {
+      alert("To-Do gespeichert!");
+      document.getElementById('todoInput').value = "";  // Leert das Eingabefeld
+    });
+  }
+
+  // Funktion zum Abrufen von To-Dos für ein Familienmitglied und einen Tag
+  function getTodos(familyMember, day) {
+    var todoRef = database.ref('todos/' + familyMember + '/' + day);
+    todoRef.on('value', function(snapshot) {
+      var todos = snapshot.val();
+      var todoList = document.getElementById('todoList');
+      todoList.innerHTML = "";  // Löscht vorherige Liste
+
+      if (todos) {
+        Object.keys(todos).forEach(function(key) {
+          var todoItem = document.createElement('div');
+          todoItem.innerText = todos[key].task;
+          todoList.appendChild(todoItem);  // Fügt To-Do zur Liste hinzu
+        });
+      } else {
+        todoList.innerText = "Keine To-Dos für diesen Tag.";
+      }
+    });
+  }
+</script>
+  
 </body>
 </html>
